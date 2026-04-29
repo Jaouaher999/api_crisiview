@@ -1,0 +1,40 @@
+pipeline {
+    agent { label 'docker-agent' }
+
+    parameters {
+        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker Image Tag to deploy')
+    }
+
+    environment {
+        BACKEND_VM_IP = "192.168.56.101"
+    }
+
+    stages {
+        stage('Deploy to Backend VM') {
+            steps {
+                sshagent(['vm-backend-ssh']) {
+                    checkout scm
+                    
+                    sh "scp -o StrictHostKeyChecking=no docker-compose.yml user@${BACKEND_VM_IP}:~/docker-compose.yml"
+                    
+                    sh """
+                        ssh -o StrictHostKeyChecking=no user@${BACKEND_VM_IP} << 'EOF'
+                            export IMAGE_TAG=${params.IMAGE_TAG}
+                            docker pull ${params.IMAGE_TAG}
+                            docker compose -f ~/docker-compose.yml up -d
+EOF
+                    """
+                }
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                retry(5) {
+                    sleep 10
+                    sh "curl -f http://${BACKEND_VM_IP}:3001/techniciens || exit 1"
+                }
+            }
+        }
+    }
+}
