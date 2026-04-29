@@ -17,13 +17,13 @@ pipeline {
                 sshagent(credentials: ["${params.SSH_CREDENTIALS_ID}"]) {
                     checkout scm
                     
-                    sh "scp -o StrictHostKeyChecking=no docker-compose.yml ${params.BACKEND_VM_USER}@${params.BACKEND_VM_HOST}:~/docker-compose.yml"
+                    sh "scp -o StrictHostKeyChecking=no docker-compose.backend.yml ${params.BACKEND_VM_USER}@${params.BACKEND_VM_HOST}:~/docker-compose.backend.yml"
                     
                     sh """
                         ssh -o StrictHostKeyChecking=no ${params.BACKEND_VM_USER}@${params.BACKEND_VM_HOST} << 'EOF'
                             export IMAGE_TAG=${params.IMAGE_TAG}
                             docker pull ${params.IMAGE_TAG}
-                            docker compose -f ~/docker-compose.yml up -d
+                            docker compose -f ~/docker-compose.backend.yml up -d
 EOF
                     """
                 }
