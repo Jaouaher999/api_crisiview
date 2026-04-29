@@ -1,9 +1,12 @@
 import { Sequelize, DataTypes } from 'sequelize';
+import dotenv from 'dotenv';
 
-const DB_NAME = 'incident_db';
-const DB_USER = 'root';
-const DB_PASS = 'root';
-const DB_HOST = 'localhost';
+dotenv.config();
+
+const DB_NAME = process.env.DB_NAME;
+const DB_USER = process.env.DB_USER;
+const DB_PASS = process.env.DB_PASSWORD;
+const DB_HOST = process.env.DB_HOST;
 
 async function init() {
     // 1. Connect to MySQL server (no DB selected)

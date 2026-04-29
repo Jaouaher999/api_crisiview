@@ -114,4 +114,3 @@ The server runs on `http://localhost:3001` by default.
   "id_incident": 5
 }
 ```
-# api_crisiview

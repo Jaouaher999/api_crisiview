@@ -1,8 +1,11 @@
 import { Sequelize, DataTypes } from 'sequelize';
 import { faker } from '@faker-js/faker';
+import dotenv from 'dotenv';
 
-const sequelize = new Sequelize('incident_db', 'root', 'root', {
-    host: 'localhost',
+dotenv.config();
+
+const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+    host: process.env.DB_HOST,
     dialect: 'mysql',
     logging: false
 });
