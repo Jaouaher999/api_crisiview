@@ -1,24 +1,26 @@
 pipeline {
-    agent { label 'docker-agent' }
-
     parameters {
-        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker Image Tag to deploy')
+        string(name: 'AGENT_LABEL', defaultValue: 'docker-agent', description: 'Jenkins agent label to run the pipeline')
+
+        string(name: 'IMAGE_TAG', defaultValue: 'yellowstar999/api_crisiview:latest', description: 'Docker image reference to deploy (ex: repo/name:tag)')
+
+        string(name: 'SSH_CREDENTIALS_ID', defaultValue: 'vm-backend-ssh', description: 'Jenkins SSH Agent credentialsId for the backend VM')
+        string(name: 'BACKEND_VM_HOST', defaultValue: '192.168.56.101', description: 'Backend VM host/IP')
+        string(name: 'BACKEND_VM_USER', defaultValue: 'user', description: 'SSH username for backend VM')
     }
 
-    environment {
-        BACKEND_VM_IP = "192.168.56.101"
-    }
+    agent { label "${params.AGENT_LABEL}" }
 
     stages {
         stage('Deploy to Backend VM') {
             steps {
-                sshagent(['vm-backend-ssh']) {
+                sshagent(credentials: ["${params.SSH_CREDENTIALS_ID}"]) {
                     checkout scm
                     
-                    sh "scp -o StrictHostKeyChecking=no docker-compose.yml user@${BACKEND_VM_IP}:~/docker-compose.yml"
+                    sh "scp -o StrictHostKeyChecking=no docker-compose.yml ${params.BACKEND_VM_USER}@${params.BACKEND_VM_HOST}:~/docker-compose.yml"
                     
                     sh """
-                        ssh -o StrictHostKeyChecking=no user@${BACKEND_VM_IP} << 'EOF'
+                        ssh -o StrictHostKeyChecking=no ${params.BACKEND_VM_USER}@${params.BACKEND_VM_HOST} << 'EOF'
                             export IMAGE_TAG=${params.IMAGE_TAG}
                             docker pull ${params.IMAGE_TAG}
                             docker compose -f ~/docker-compose.yml up -d
@@ -32,7 +34,7 @@ EOF
             steps {
                 retry(5) {
                     sleep 10
-                    sh "curl -f http://${BACKEND_VM_IP}:3001/techniciens || exit 1"
+                    sh "curl -f http://${params.BACKEND_VM_HOST}:3001/techniciens || exit 1"
                 }
             }
         }
